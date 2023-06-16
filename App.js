@@ -7,11 +7,14 @@ import AuthNavigation from "./AuthNavigation";
 import Postform from "./screens/postscreen";
 import PostDetail from "./screens/imageex";
 import AllPosts from "./screens/PostImage";
+import { UserProvider } from "./context/UserProvider";
 
 const Stack = createNativeStackNavigator();
 
 function App() {
-  return <AuthNavigation />;
+  return (
+    <AuthNavigation />
+  );
 }
 
 export default App;

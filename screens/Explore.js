@@ -1,31 +1,21 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  SafeAreaView,
-  FlatList,
-  Image,
-  ScrollView,
-} from "react-native";
-
-import { posts } from "../data/posts";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
-// simport MyProfileScreen from "./MyProfileScreen
-import Header from "../components/headerPart";
+import { useState } from "react";
 import Post from "../components/Postpart";
-import Tabs from "../components/Tabs";
-import { useState, useEffect } from "react";
 
-//import { Divider } from 'react-native-elements';
-export default function Explorescreen() {
+import Header from "../components/headerPart";
+
+export default function Explorescreen({ navigation }) {
+  const [searchText, setSearchText] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+
+  const handleSearch = (text) => {
+    setSearchText(text);
+    setSearchFilter(text);
+  };
+
   return (
     <>
-      <Header />
-      <Post />
-      {/* <NavigationContainer>
-        <Tabs />
-      </NavigationContainer> */}
+      <Header onSearch={handleSearch} setSearchFilter={setSearchFilter} />
+      <Post navigation={navigation} searchFilter={searchFilter} />
     </>
   );
 }
