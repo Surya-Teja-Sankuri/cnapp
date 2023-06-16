@@ -1,64 +1,58 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
-  Text,
-  TouchableOpacity,
   View,
-  SafeAreaView,
-  Image,
-  StyleSheet,
-  StatusBar,
-  Platform,
-  ScrollView,
   FlatList,
-  Dimensions,
+  Image,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
 } from "react-native";
-import { posts } from "../data/posts";
+import postContext from "../context/PostsProvider";
+import { AntDesign } from '@expo/vector-icons';
+
 const numColumns = 2;
-import { useState, useEffect } from "react";
-import { db, firebase } from "../firebase";
-export default function Post({ navigation }) {
-  const [posts, setPosts] = useState([]);
-  const fetchPosts = async () => {
-    try {
-      const querySnapshot = await db.collectionGroup("posts").get();
 
-      const data = [];
-      querySnapshot.forEach((doc) => {
-        const postData = doc.data();
+export default function Post({ navigation, searchFilter }) {
 
-        data.push(postData);
-        // // Check if postData is an array
-        // if (Array.isArray(postData)) {
-        //   postData.forEach((post) => {
-        //     data.push(post);
-        //   });
-        // }
-      });
+  const { posts } = useContext(postContext);
 
-      setPosts(data);
-    } catch (error) {
-      console.log("Error fetching posts:", error);
-    }
-  };
+  const [filteredPosts, setFilteredPosts] = useState([]);
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
-  renderItem = ({ item, index }) => (
-    <View style={styles.imgContainer} key={index}>
-      <Image source={{ uri: item.image }} style={styles.postcss} />
-      <View style={styles.imgTxtContainer}>
-        <Text style={styles.imgTxt}>{item.species}</Text>
-      </View>
-    </View>
-  );
+    // Filter the posts based on the search filter
+    if (searchFilter) {
+      const filteredData = posts.filter((post) =>
+        post.species.toLowerCase().startsWith(searchFilter.toLowerCase())
+      );
+      setFilteredPosts(filteredData);
+    } else {
+      setFilteredPosts(posts);
+    }
+  }, [searchFilter, posts]);
+
+  const renderItem = ({ item, index }) => {
+    return (
+      <TouchableOpacity
+        onPress={() => navigation.navigate("postDetails", { item: item })}
+      >
+        <View style={styles.imgContainer} key={index}>
+          <Image source={{ uri: item.image }} style={styles.postcss} />
+          <View style={styles.imgTxtContainer}>
+            <Text style={styles.imgTxt}>{item.species}</Text>
+            {item.verified && <AntDesign name="checkcircle" size={24} color="lightgreen" />}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.postContainer}>
       <FlatList
-        data={posts}
+        data={filteredPosts}
         renderItem={renderItem}
         numColumns={numColumns}
-        snapToAlignment="start"
+        style={styles.flatlistItems}
         keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={styles.postContainer}
       />
@@ -69,10 +63,10 @@ export default function Post({ navigation }) {
 const styles = StyleSheet.create({
   imgContainer: {
     marginTop: 15,
-    // marginLeft: 30,
-    margin: 10,
+    // margin: 10,
     marginBottom: 7,
-    marginLeft: 15,
+    marginLeft: 10,
+    marginHorizontal: "auto",
     position: "relative",
   },
   imgTxt: {
@@ -88,26 +82,17 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 15,
     paddingVertical: 5,
     paddingHorizontal: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   postContainer: {
-    marginBottom: 250,
+    marginBottom: 170,
+    alignItems: "center",
   },
   postcss: {
-    width: 170,
-    height: 170,
+    width: 150,
+    height: 150,
     borderRadius: 15,
     borderWidth: 10,
   },
 });
-
-{
-  /* {
-          posts.map((post, index)=>(
-            <View key={index}>
-              <Image source={{uri: post.img}} style={styles.postcss} />
-              <Image source={{uri: post.img}} style={styles.postcss} />
-            </View>
-          )
-          )
-      } */
-}

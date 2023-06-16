@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -7,35 +7,33 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
+  Platform,
+  DatePickerIOSBase,
+  Button
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { FontAwesome } from "@expo/vector-icons";
-import { AntDesign } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import { Feather } from "@expo/vector-icons";
 import { db, firebase } from "../firebase";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import userContext from "../context/UserProvider";
 
 const Postform = ({ navigation }) => {
-  const [currentLoggedInUser, setCurrentLoggedInUser] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
-  const getUsername = () => {
-    const user = firebase.auth().currentUser;
-    const unsubscribe = db
-      .collection("users")
-      .where("owner_uid", "==", user.uid)
-      .limit(1)
-      .onSnapshot((snapshot) =>
-        snapshot.docs.map((doc) => {
-          setCurrentLoggedInUser({
-            username: doc.data().username,
-          });
-        })
-      );
-    return unsubscribe;
+  const [image, setImage] = useState(null);
+  const [description, setDescription] = useState("");
+  const [species, setSpecies] = useState("");
+  const [subspecies, setSubSpecies] = useState("");
+  const [date, setDate] = useState(new Date());
+
+  const handleLocationPress = () => {
+    navigation.navigate("mapScreen", {
+      setSelectedLocation: setSelectedLocation,
+    });
   };
 
-  useEffect(() => {
-    getUsername();
-  }, []);
+  const { userDetails } = useContext(userContext);
+  // console.log(userDetails);
 
   const uploadPostToFire = async (
     image,
@@ -44,7 +42,6 @@ const Postform = ({ navigation }) => {
     subspecies,
     location
   ) => {
-    const currentUser = firebase.auth().currentUser;
 
     const response = await fetch(image);
     const blob = await response.blob();
@@ -56,27 +53,28 @@ const Postform = ({ navigation }) => {
       reader.readAsDataURL(blob);
     });
 
-    db.collection("users")
-      .doc(currentUser.uid)
-      .collection("posts")
+    db.collection("posts")
       .add({
-        username: currentLoggedInUser.username,
-        owner_uid: currentUser.uid,
-        owner_email: currentUser.email,
+        username: userDetails.username,
+        owner_uid: userDetails.owner_uid,
+        owner_email: userDetails.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         image: base64Image,
         description: description,
         species: species,
         subSpecies: subspecies,
+        date: date,
         location: location,
+        verified: false,
       })
       .then(() => {
         // Reset state after successful upload
+        console.log(`added photo`);
         setImage(null);
         setDescription("");
         setSpecies("");
         setSubSpecies("");
-        setLocation(null);
+        setSelectedLocation(null);
 
         // Go back to previous screen
         navigation.goBack();
@@ -86,12 +84,6 @@ const Postform = ({ navigation }) => {
       });
   };
 
-  const [image, setImage] = useState(null);
-  const [description, setDescription] = useState("");
-  const [species, setSpecies] = useState("");
-  const [subspecies, setSubSpecies] = useState("");
-  const [location, setLocation] = useState(null);
-
   const selectImageFromCamera = async () => {
     let permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -100,7 +92,7 @@ const Postform = ({ navigation }) => {
     }
 
     let pickerResult = await ImagePicker.launchCameraAsync();
-    if (!pickerResult.cancelled) {
+    if (!pickerResult.canceled) {
       setImage(pickerResult.uri);
     }
   };
@@ -114,7 +106,7 @@ const Postform = ({ navigation }) => {
     }
 
     let pickerResult = await ImagePicker.launchImageLibraryAsync();
-    if (!pickerResult.cancelled) {
+    if (!pickerResult.canceled) {
       setImage(pickerResult.uri);
     }
   };
@@ -131,85 +123,87 @@ const Postform = ({ navigation }) => {
     setSubSpecies(text);
   };
 
-  const handleLocationChange = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    setLocation({ latitude, longitude });
-  };
-
   const handlePost = () => {
-    if (image && description && species && subspecies && location) {
-      uploadPostToFire(image, description, species, subspecies, location);
+    if (image && description && species && subspecies && selectedLocation && date) {
+      uploadPostToFire(image, description, species, subspecies, selectedLocation, date);
     } else {
       alert("Please fill in all the required fields.");
     }
   };
 
+  const [showPicker, setShowPicker] = useState(false);
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowPicker(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
   return (
     <>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Post</Text>
+      </View>
+
       <ScrollView>
-        <View style={styles.headerContainer}>
-          <AntDesign name="arrowleft" size={35} color="black" />
-          <Text style={styles.headerText}>Post</Text>
-        </View>
         <View style={styles.container}>
-          <View style={styles.cameraContainer}>
-            <TouchableOpacity onPress={selectImageFromCamera}>
-              <AntDesign
-                name="camera"
-                size={50}
-                color="black"
-                style={styles.cameraIcon}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={selectImageFromGallery}>
-              <AntDesign
-                name="folderopen"
-                size={50}
-                color="black"
-                style={styles.folderIcon}
-              />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.photoOptions} onPress={selectImageFromGallery}>
+            <Feather name="folder" size={24} color="#044e5e" />
+            <Text style={styles.optionText}>Select from Folder</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.photoOptions} onPress={selectImageFromCamera}>
+            <Feather name="camera" size={24} color="#044e5e" />
+            <Text style={styles.optionText}>Take a Photo</Text>
+          </TouchableOpacity>
           {image && <Image source={{ uri: image }} style={styles.image} />}
           <TextInput
-            style={styles.speciesInput}
-            placeholder="Enter species name"
+            style={styles.input}
+            placeholder="Species"
             value={species}
             onChangeText={handleSpeciesChange}
           />
           <TextInput
-            style={styles.speciesInput}
-            placeholder="Enter sub-species name"
+            style={styles.input}
+            placeholder="Subspecies"
             value={subspecies}
             onChangeText={handleSubSpeciesChange}
           />
           <TextInput
-            style={styles.descriptionInput}
-            placeholder="Enter description"
+            style={styles.input}
+            placeholder="description"
             value={description}
             onChangeText={handleDescriptionChange}
             multiline
           />
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: 37.78825,
-              longitude: -122.4324,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            onPress={handleLocationChange}
-          >
-            {location && (
-              <Marker
-                coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                }}
-              />
-            )}
-          </MapView>
-
+          <View style={styles.dateField}>
+            <Text style={styles.label}>Date</Text>
+            <View>
+              <Text style={styles.dateText}>{date.toLocaleDateString()}</Text>
+              {showPicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                />
+              )}
+            </View>
+            <Button title="Select Date" onPress={() => setShowPicker(true)} />
+          </View>
+          {!selectedLocation ? (
+            <TouchableOpacity onPress={handleLocationPress} style={styles.textField}>
+              <Text style={styles.placeholderText}>Select Location</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleLocationPress} style={styles.selectedField}>
+              <Text style={styles.selectedText}>{`${selectedLocation.latitude}, ${selectedLocation.longitude}`}</Text>
+              <Feather name="edit" size={16} color="#000" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.postButton} onPress={handlePost}>
             <Text style={styles.postButtonText}>Post</Text>
           </TouchableOpacity>
@@ -221,81 +215,125 @@ const Postform = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    width: "100%",
-
-    backgroundColor: "lightgreen",
-    padding: 20,
-    alignItems: "center",
+    marginTop: 35,
+    backgroundColor: "#C9FFA8",
+    height: 60,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
   },
-  headerText: {
-    paddingLeft: 130,
+  backButton: {
+    position: "absolute",
+    left: 10,
+    padding: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: "bold",
-    fontSize: 25,
+    color: "#000",
   },
   container: {
     flex: 1,
-    alignItems: "flex-start",
-    marginTop: 90,
-    marginLeft: 20,
-    marginBottom: 90,
-    gap: 25,
-  },
-  cameraContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  cameraIcon: {
-    marginRight: 10,
-    paddingRight: 10,
-    borderRightColor: "black",
-    borderRightWidth: 3,
-  },
-  folderIcon: {
-    marginRight: 15,
+    padding: 20,
   },
   image: {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
     marginBottom: 20,
     borderRadius: 10,
+    // elevation: 4
   },
-  descriptionInput: {
-    width: "80%",
-    height: 100,
-    borderWidth: 1,
+  photoOptions: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  optionText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#044e5e",
+  },
+  input: {
+    borderBottomWidth: 1,
     borderColor: "#ccc",
     marginBottom: 20,
-    padding: 10,
+    fontSize: 16,
+    paddingVertical: 8,
   },
-  speciesInput: {
-    width: "80%",
-    height: 40,
+  textField: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 20,
-    padding: 10,
+    borderColor: "#000",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
-  map: {
-    width: "80%",
-    height: 200,
-    marginBottom: 20,
+  placeholderText: {
+    color: "#888",
+  },
+  selectedField: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#C9FFA8",
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  selectedText: {
+    flex: 1,
+    marginRight: 10,
+    color: "#000",
   },
   postButton: {
-    backgroundColor: "lightgreen",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 26,
-    width: 120,
-    height: 65,
-    justifyContent: "center",
+    backgroundColor: "#044e5e",
+    borderRadius: 5,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 10,
   },
   postButtonText: {
-    paddingLeft: 7,
-    paddingBottom: 3,
-    color: "black",
-    fontSize: 30,
-    fontWeight: "500",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  textField: {
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  placeholderText: {
+    color: "#888",
+  },
+  selectedField: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#C9FFA8",
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+  },
+  selectedText: {
+    flex: 1,
+    marginRight: 10,
+    color: "#000",
+  },
+  dateField: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  dateText: {
+    fontSize: 16,
+    marginBottom: 8,
   },
 });
 
