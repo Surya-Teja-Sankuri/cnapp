@@ -165,9 +165,9 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     map: {
-        width: 300,
+        width: '100%',
         height: 200,
-        marginBottom: 24,
+        // marginBottom: 24,
     },
     // new stylings
     button: {
