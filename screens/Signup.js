@@ -42,8 +42,8 @@ const Signup = (props) => {
     <SafeAreaView
       style={{
         alignItems: "center",
-        width: 400,
-        paddingTop: 50,
+        width: '100%',
+        height: '100%',
         backgroundColor: "white",
       }}
     >
@@ -228,7 +228,7 @@ const Signup = (props) => {
               <View style={styles.signupcont}>
                 <Text>Don't have an account?</Text>
                 <TouchableOpacity
-                  onPress={() => props.navigation.navigate("login")}
+                  onPress={() => props.navigation.goBack()}
                 >
                   <Text
                     style={{
