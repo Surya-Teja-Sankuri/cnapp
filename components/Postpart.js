@@ -8,12 +8,11 @@ import {
   StyleSheet,
 } from "react-native";
 import postContext from "../context/PostsProvider";
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign } from "@expo/vector-icons";
 
 const numColumns = 2;
 
 export default function Post({ navigation, searchFilter }) {
-
   const { posts } = useContext(postContext);
 
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -39,7 +38,9 @@ export default function Post({ navigation, searchFilter }) {
           <Image source={{ uri: item.image }} style={styles.postcss} />
           <View style={styles.imgTxtContainer}>
             <Text style={styles.imgTxt}>{item.species}</Text>
-            {item.verified && <AntDesign name="checkcircle" size={24} color="lightgreen" />}
+            {item.verified && (
+              <AntDesign name="checkcircle" size={24} color="lightgreen" />
+            )}
           </View>
         </View>
       </TouchableOpacity>

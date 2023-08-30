@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
     View,
     Text,
@@ -10,9 +10,12 @@ import {
 } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import userContext from '../context/UserProvider';
 
 const EditProfile = () => {
     const navigation = useNavigation();
+
+    const { userDetails } = useContext(userContext);
 
     const onPressBack = () => {
         navigation.goBack();
@@ -40,8 +43,8 @@ const EditProfile = () => {
             <ScrollView>
                 <View style={styles.profileContainer}>
                     <View style={styles.profileInfoContainer}>
-                        <Text style={styles.profileNameText}>John Doe</Text>
-                        <Text style={styles.profileEmailText}>johndoe@example.com</Text>
+                        <Text style={styles.profileNameText}>{userDetails.username}</Text>
+                        <Text style={styles.profileEmailText}>{userDetails.email}</Text>
                     </View>
 
                     <View style={styles.profilePictureContainer}>

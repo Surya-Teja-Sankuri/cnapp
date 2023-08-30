@@ -9,12 +9,12 @@ import {
   ScrollView,
   Platform,
   DatePickerIOSBase,
-  Button
+  Button,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { db, firebase } from "../firebase";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 import userContext from "../context/UserProvider";
 
 const Postform = ({ navigation }) => {
@@ -42,7 +42,6 @@ const Postform = ({ navigation }) => {
     subspecies,
     location
   ) => {
-
     const response = await fetch(image);
     const blob = await response.blob();
 
@@ -124,8 +123,22 @@ const Postform = ({ navigation }) => {
   };
 
   const handlePost = () => {
-    if (image && description && species && subspecies && selectedLocation && date) {
-      uploadPostToFire(image, description, species, subspecies, selectedLocation, date);
+    if (
+      image &&
+      description &&
+      species &&
+      subspecies &&
+      selectedLocation &&
+      date
+    ) {
+      uploadPostToFire(
+        image,
+        description,
+        species,
+        subspecies,
+        selectedLocation,
+        date
+      );
     } else {
       alert("Please fill in all the required fields.");
     }
@@ -143,7 +156,10 @@ const Postform = ({ navigation }) => {
   return (
     <>
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Feather name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post</Text>
@@ -151,11 +167,17 @@ const Postform = ({ navigation }) => {
 
       <ScrollView>
         <View style={styles.container}>
-          <TouchableOpacity style={styles.photoOptions} onPress={selectImageFromGallery}>
+          <TouchableOpacity
+            style={styles.photoOptions}
+            onPress={selectImageFromGallery}
+          >
             <Feather name="folder" size={24} color="#044e5e" />
             <Text style={styles.optionText}>Select from Folder</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.photoOptions} onPress={selectImageFromCamera}>
+          <TouchableOpacity
+            style={styles.photoOptions}
+            onPress={selectImageFromCamera}
+          >
             <Feather name="camera" size={24} color="#044e5e" />
             <Text style={styles.optionText}>Take a Photo</Text>
           </TouchableOpacity>
@@ -195,12 +217,20 @@ const Postform = ({ navigation }) => {
             <Button title="Select Date" onPress={() => setShowPicker(true)} />
           </View>
           {!selectedLocation ? (
-            <TouchableOpacity onPress={handleLocationPress} style={styles.textField}>
+            <TouchableOpacity
+              onPress={handleLocationPress}
+              style={styles.textField}
+            >
               <Text style={styles.placeholderText}>Select Location</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleLocationPress} style={styles.selectedField}>
-              <Text style={styles.selectedText}>{`${selectedLocation.latitude}, ${selectedLocation.longitude}`}</Text>
+            <TouchableOpacity
+              onPress={handleLocationPress}
+              style={styles.selectedField}
+            >
+              <Text
+                style={styles.selectedText}
+              >{`${selectedLocation.latitude}, ${selectedLocation.longitude}`}</Text>
               <Feather name="edit" size={16} color="#000" />
             </TouchableOpacity>
           )}
