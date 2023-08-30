@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
-  DatePickerIOSBase,
   Button,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -19,12 +18,13 @@ import userContext from "../context/UserProvider";
 
 const Postform = ({ navigation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
-
   const [image, setImage] = useState(null);
   const [description, setDescription] = useState("");
   const [species, setSpecies] = useState("");
   const [subspecies, setSubSpecies] = useState("");
   const [date, setDate] = useState(new Date());
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLocationPress = () => {
     navigation.navigate("mapScreen", {
@@ -74,7 +74,7 @@ const Postform = ({ navigation }) => {
         setSpecies("");
         setSubSpecies("");
         setSelectedLocation(null);
-
+        setIsLoading(false);
         // Go back to previous screen
         navigation.goBack();
       })

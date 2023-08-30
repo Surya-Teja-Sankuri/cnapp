@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Explorescreen from "../screens/Explore";
 import Postform from "../screens/postscreen";
 import EditProfile from "../screens/EditProfile";
+import MyDrawer from "../screens/MyDrawer";
 
 const Tab = createBottomTabNavigator();
 const logoColor = (focused) => (focused ? "#00f0a2" : "#fff");
@@ -49,7 +50,7 @@ export default function Tabs({ navigation }) {
     >
       <Tab.Screen
         name="Home"
-        component={Explorescreen}
+        component={MyDrawer}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.footerIcons}>

@@ -10,9 +10,16 @@ import {
   Platform,
   TextInput,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from '@react-navigation/drawer';
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import Post from "./Postpart";
 
-export default function Header({ setSearchFilter }) {
+export default function Header({setSearchFilter, navigation}) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
 
@@ -31,47 +38,53 @@ export default function Header({ setSearchFilter }) {
     setSearchFilter(text); // Pass the search filter to the parent component
   };
 
+  const openDrawer = () => {
+    navigation.openDrawer(); // Open the drawer
+  };
+
+  // const [searchFilter] = useState("");
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity>
-        <FontAwesome
-          style={{ padding: 15, color: "#004a5e" }}
-          name="bars"
-          size={24}
-          color="black"
-        />
-      </TouchableOpacity>
-      {!isSearchOpen && <Text style={styles.explore}>Explore</Text>}
-      {!isSearchOpen && (
-        <TouchableOpacity onPress={handleSearchClick}>
+    <>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={openDrawer}>
           <FontAwesome
             style={{ padding: 15, color: "#004a5e" }}
-            name="search"
+            name="bars"
             size={24}
             color="black"
           />
         </TouchableOpacity>
-      )}
-      {isSearchOpen && (
-        <View style={styles.searchBar}>
-          <TouchableOpacity onPress={handleSearchIconClick}>
+        {!isSearchOpen && <Text style={styles.explore}>Explore</Text>}
+        {!isSearchOpen && (
+          <TouchableOpacity onPress={handleSearchClick}>
             <FontAwesome
-              style={{ padding: 10, color: "#004a5e" }}
+              style={{ padding: 15, color: "#004a5e" }}
               name="search"
-              size={20}
+              size={24}
               color="black"
             />
           </TouchableOpacity>
-          <TextInput
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={handleChangeText}
-            placeholder="Search"
-            placeholderTextColor="#000000"
-          />
-        </View>
-      )}
-    </View>
+        )}
+        {isSearchOpen && (
+          <View style={styles.searchBar}>
+            <TouchableOpacity onPress={handleSearchIconClick}>
+              <MaterialIcons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInput}
+              value={searchText}
+              onChangeText={handleChangeText}
+              placeholder="Search"
+              placeholderTextColor="#000000"
+            />
+          </View>
+        )}
+      </View>
+      {/* <View>
+        <Post navigation={navigation} searchFilter={searchFilter} />
+      </View> */}
+    </>
   );
 }
 

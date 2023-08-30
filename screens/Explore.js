@@ -14,7 +14,7 @@ export default function Explorescreen({ navigation }) {
 
   return (
     <>
-      <Header onSearch={handleSearch} setSearchFilter={setSearchFilter} />
+      <Header onSearch={handleSearch} setSearchFilter={setSearchFilter} navigation={navigation} />
       <Post navigation={navigation} searchFilter={searchFilter} />
     </>
   );
