@@ -6,7 +6,9 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    Alert
+    Alert,
+    Platform,
+    StatusBar
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
@@ -112,7 +114,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     headerContainer: {
-        marginTop: 35,
+        // marginTop: 35,
+        marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
         backgroundColor: "#C9FFA8",
         height: 60,
         flexDirection: "row",

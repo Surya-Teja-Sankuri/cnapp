@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
+  StatusBar,
+  Platform
 } from "react-native";
 import postContext from "../context/PostsProvider";
 import { AntDesign } from '@expo/vector-icons';
@@ -55,6 +57,9 @@ export default function Post({ navigation, searchFilter }) {
         style={styles.flatlistItems}
         keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={styles.postContainer}
+        columnWrapperStyle={{
+          justifyContent: "space-evenly",
+        }}
       />
     </View>
   );
@@ -62,11 +67,9 @@ export default function Post({ navigation, searchFilter }) {
 
 const styles = StyleSheet.create({
   imgContainer: {
-    marginTop: 15,
-    // margin: 10,
-    marginBottom: 7,
-    marginLeft: 10,
-    marginHorizontal: "auto",
+    marginTop: 10,
+    marginBottom: 10,
+    marginVertical: 10,
     position: "relative",
   },
   imgTxt: {
@@ -86,12 +89,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   postContainer: {
-    marginBottom: 170,
-    alignItems: "center",
+    marginBottom: 160,
+    // alignItems: "center",
   },
   postcss: {
-    width: 150,
-    height: 150,
+    width: 170,
+    height: 170,
     borderRadius: 15,
     borderWidth: 10,
   },

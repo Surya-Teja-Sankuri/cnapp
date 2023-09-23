@@ -37,8 +37,8 @@ export default function Button({btnLabel,Press}) {
 
 const styles = StyleSheet.create({
     button: {
-        width: 200,
-        height: 70,
+        width: 250,
+        height: 60,
         backgroundColor: 'rgba(0, 0, 0, 0.63)',
         justifyContent: 'center',
         alignItems: 'center',
@@ -46,8 +46,8 @@ const styles = StyleSheet.create({
         marginBottom: 100
     },
     buttonText: {
-        color: '#24ff00',
-        fontSize: 25,
+        color: '#C9FFA8',
+        fontSize: 26,
         fontWeight: 500,
         // fontFamily: 'inter'
     },
