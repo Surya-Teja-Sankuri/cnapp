@@ -1,6 +1,20 @@
 import * as React from 'react';
-import { View, Text, Button } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  StatusBar,
+  Button,
+  Divider
+} from "react-native";
+// import {Divider} from '@rneui/themed';
 import { NavigationContainer } from '@react-navigation/native';
+import { Feather } from "@expo/vector-icons";
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -16,8 +30,15 @@ const Drawer = createDrawerNavigator();
 
 function Notifications() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ flex: 1}}>
+      <View style={styles.headerContainer}>
+          <TouchableOpacity style={styles.backButton}>
+              <Feather name="arrow-left" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>About</Text>
+      </View>
       <Text>Notifications Screen</Text>
+      
     </View>
   );
 }
@@ -53,4 +74,27 @@ function MyDrawer() {
     </Drawer.Navigator>
   );
 }
+const styles=StyleSheet.create({
+  headerContainer: {
+    // marginTop: 35,
+    marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    backgroundColor: "#C9FFA8",
+    height: 60,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  backButton: {
+    position: "absolute",
+    left: 10,
+    padding: 10,
+  },
+}
+)
 export default MyDrawer;

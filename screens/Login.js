@@ -153,7 +153,7 @@ const Login = (props) => {
                 >
                   <Text
                     style={{
-                      color: "lightgreen",
+                      color: "#24ba9f",
                       fontWeight: "bold",
                       textDecorationLine: "underline",
                     }}
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   inputfield: {
     borderRadius: 25,
     padding: 12,
-    backgroundColor: "#D3D3D3",
+    backgroundColor: "#ffffff",
     marginBottom: 10,
     borderWidth: 1,
     width: "80%",
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   button: (isValid) => ({
-    backgroundColor: "#8CFF79",
+    backgroundColor: "#24ba9f",
     alignItems: "center",
     justifyContent: "center",
     minHeight: 42,
