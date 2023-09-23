@@ -1,11 +1,12 @@
 import React from "react";
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import { FontAwesome, Feather } from "@expo/vector-icons";
+import { FontAwesome, Feather, MaterialCommunityIcons} from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Explorescreen from "../screens/Explore";
 import Postform from "../screens/postscreen";
-import EditProfile from "../screens/EditProfile";
+import EditProfile from "../screens/MyProfileScreen";
 import MyDrawer from "../screens/MyDrawer";
+import MyProfileScreen from "../screens/MyProfileScreen";
 
 const Tab = createBottomTabNavigator();
 const logoColor = (focused) => (focused ? "#00f0a2" : "#fff");
@@ -54,7 +55,7 @@ export default function Tabs({ navigation }) {
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.footerIcons}>
-              <FontAwesome name="home" size={38} color={logoColor(focused)} />
+              <FontAwesome name="home" size={35} color={logoColor(focused)} />
               <Text style={{ color: logoColor(focused) }}>Home</Text>
             </View>
           ),
@@ -72,11 +73,11 @@ export default function Tabs({ navigation }) {
       />
       <Tab.Screen
         name="My Profile"
-        component={EditProfile}
+        component={MyProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.footerIcons}>
-              <FontAwesome name="user" size={38} color={logoColor(focused)} />
+              <FontAwesome name="user" size={35} color={logoColor(focused)} />
               <Text style={{ color: logoColor(focused) }}>Profile</Text>
             </View>
           ),

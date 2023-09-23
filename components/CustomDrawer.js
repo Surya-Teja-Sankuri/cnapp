@@ -1,9 +1,10 @@
+import { useContext, useEffect, useState } from "react";
 import { DrawerContentScrollView, DrawerItemList} from '@react-navigation/drawer';
 import { React } from 'react'
 import { View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity} from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import { firebase } from "../firebase";
-
+import userContext from "../context/UserProvider";
 
 const CustomDrawer=(props) => {
     const handleSignout = () => {
@@ -15,16 +16,17 @@ const CustomDrawer=(props) => {
             console.log(error.message);
         }
     };
+    const { userDetails } = useContext(userContext);
     return (
         <View style={{flex: 1}}>
             <DrawerContentScrollView {...props}>
                 <ImageBackground source={require('../assets/bluegreen2.jpg')} 
                 style={{padding: 30}}>
-                    <Image source={require('../assets/dummy-profile.png')}
+                    <Image source={{uri: userDetails?.image}}
                     style={styles.profilePic}
                     />
-                    <Text style={{color: 'black', fontSize: 18}}>John Smith</Text>
-                    <Text style={{color: 'black'}}>js@gmail.com</Text>
+                    <Text style={{color: 'black', fontSize: 18}}>{userDetails?.username}</Text>
+                    <Text style={{color: 'black'}}>{userDetails?.email}</Text>
                 </ImageBackground>
                 <View style={{flex: 1, marginTop: 10}}>
                     <DrawerItemList {...props}/>
