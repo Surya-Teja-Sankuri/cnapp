@@ -5,7 +5,7 @@ export default function LoadingComponent() {
   return (
     <View style={styles.loading}>
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1e90ff" />
+        <ActivityIndicator size="large" color="#029c2b" />
       </View>
     </View>
   );
@@ -26,6 +26,5 @@ const styles = StyleSheet.create({
     right: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });

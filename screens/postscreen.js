@@ -15,6 +15,8 @@ import { Feather } from "@expo/vector-icons";
 import { db, firebase } from "../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import userContext from "../context/UserProvider";
+import * as Location from "expo-location";
+import LoadingComponent from "../components/LoadingComponent";
 
 const Postform = ({ navigation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -26,6 +28,22 @@ const Postform = ({ navigation }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const getPermission = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Location permission not granted");
+        return;
+      }
+
+      const { coords } = await Location.getCurrentPositionAsync();
+      const latitude = coords.latitude;
+      const longitude = coords.longitude;
+      setSelectedLocation({ latitude, longitude });
+    };
+    getPermission();
+  }, []);
+
   const handleLocationPress = () => {
     navigation.navigate("mapScreen", {
       setSelectedLocation: setSelectedLocation,
@@ -33,7 +51,6 @@ const Postform = ({ navigation }) => {
   };
 
   const { userDetails } = useContext(userContext);
-  // console.log(userDetails);
 
   const uploadPostToFire = async (
     image,
@@ -45,6 +62,7 @@ const Postform = ({ navigation }) => {
     const response = await fetch(image);
     const blob = await response.blob();
 
+    setIsLoading(true);
     const base64Image = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -164,81 +182,91 @@ const Postform = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post</Text>
       </View>
-
-      <ScrollView>
-        <View style={styles.container}>
-          <TouchableOpacity
-            style={styles.photoOptions}
-            onPress={selectImageFromGallery}
-          >
-            <Feather name="folder" size={24} color="#044e5e" />
-            <Text style={styles.optionText}>Select from Folder</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.photoOptions}
-            onPress={selectImageFromCamera}
-          >
-            <Feather name="camera" size={24} color="#044e5e" />
-            <Text style={styles.optionText}>Take a Photo</Text>
-          </TouchableOpacity>
-          {image && <Image source={{ uri: image }} style={styles.image} />}
-          <TextInput
-            style={styles.input}
-            placeholder="Species"
-            value={species}
-            onChangeText={handleSpeciesChange}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Subspecies"
-            value={subspecies}
-            onChangeText={handleSubSpeciesChange}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="description"
-            value={description}
-            onChangeText={handleDescriptionChange}
-            multiline
-          />
-          <View style={styles.dateField}>
-            <Text style={styles.label}>Date</Text>
-            <View>
-              <Text style={styles.dateText}>{date.toLocaleDateString()}</Text>
-              {showPicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
+      <>
+        {isLoading ? (
+          <LoadingComponent />
+        ) : (
+          <ScrollView>
+            <View style={styles.container}>
+              <TouchableOpacity
+                style={styles.photoOptions}
+                onPress={selectImageFromGallery}
+              >
+                <Feather name="folder" size={24} color="#044e5e" />
+                <Text style={styles.optionText}>Select from Folder</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.photoOptions}
+                onPress={selectImageFromCamera}
+              >
+                <Feather name="camera" size={24} color="#044e5e" />
+                <Text style={styles.optionText}>Take a Photo</Text>
+              </TouchableOpacity>
+              {image && <Image source={{ uri: image }} style={styles.image} />}
+              <TextInput
+                style={styles.input}
+                placeholder="Species"
+                value={species}
+                onChangeText={handleSpeciesChange}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Subspecies"
+                value={subspecies}
+                onChangeText={handleSubSpeciesChange}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="description"
+                value={description}
+                onChangeText={handleDescriptionChange}
+                multiline
+              />
+              <View style={styles.dateField}>
+                <Text style={styles.label}>Date</Text>
+                <View>
+                  <Text style={styles.dateText}>
+                    {date.toLocaleDateString()}
+                  </Text>
+                  {showPicker && (
+                    <DateTimePicker
+                      value={date}
+                      mode="date"
+                      display="default"
+                      onChange={handleDateChange}
+                    />
+                  )}
+                </View>
+                <Button
+                  title="Select Date"
+                  onPress={() => setShowPicker(true)}
                 />
+              </View>
+              {!selectedLocation ? (
+                <TouchableOpacity
+                  onPress={handleLocationPress}
+                  style={styles.textField}
+                >
+                  <Text style={styles.placeholderText}>Select Location</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleLocationPress}
+                  style={styles.selectedField}
+                >
+                  <Text
+                    style={styles.selectedText}
+                  >{`${selectedLocation.latitude}, ${selectedLocation.longitude}`}</Text>
+                  <Feather name="edit" size={16} color="#000" />
+                </TouchableOpacity>
               )}
+              <TouchableOpacity style={styles.postButton} onPress={handlePost}>
+                <Text style={styles.postButtonText}>Post</Text>
+              </TouchableOpacity>
             </View>
-            <Button title="Select Date" onPress={() => setShowPicker(true)} />
-          </View>
-          {!selectedLocation ? (
-            <TouchableOpacity
-              onPress={handleLocationPress}
-              style={styles.textField}
-            >
-              <Text style={styles.placeholderText}>Select Location</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={handleLocationPress}
-              style={styles.selectedField}
-            >
-              <Text
-                style={styles.selectedText}
-              >{`${selectedLocation.latitude}, ${selectedLocation.longitude}`}</Text>
-              <Feather name="edit" size={16} color="#000" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-            <Text style={styles.postButtonText}>Post</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </ScrollView>
+        )}
+      </>
     </>
   );
 };
