@@ -1,5 +1,10 @@
-import { StyleSheet, SafeAreaView, ImageBackground, Alert, StatusBar, Platform } from "react-native";
-import Button from "../assets/button";
+import {
+  StyleSheet,
+  SafeAreaView,
+  ImageBackground,
+  TouchableOpacity,
+  Text,
+} from "react-native";
 
 const Home = (props) => {
   return (
@@ -8,10 +13,12 @@ const Home = (props) => {
         source={require("../assets/forest.jpg")}
         style={styles.backgoundImage}
       >
-        <Button
-          btnLabel="Lets Start"
-          Press={() => props.navigation.navigate("Login")}
-        />
+        <TouchableOpacity
+          onPress={() => props.navigation.navigate("Login")}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Let's Start</Text>
+        </TouchableOpacity>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -28,6 +35,21 @@ const styles = StyleSheet.create({
     // resizeMode: 'cover',
     alignItems: "center",
     justifyContent: "flex-end",
+  },
+  button: {
+    width: 250,
+    height: 60,
+    backgroundColor: "rgba(0, 0, 0, 0.63)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
+    marginBottom: 100,
+  },
+  buttonText: {
+    color: "#C9FFA8",
+    fontSize: 26,
+    fontWeight: 500,
+    // fontFamily: 'inter'
   },
 });
 export default Home;

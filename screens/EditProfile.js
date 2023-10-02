@@ -1,49 +1,49 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import moment from "moment";
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
   Image,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-  Alert,
-  ImageBackground,
+  Modal,
   Platform,
   StatusBar,
-  Modal
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { MaterialIcons, Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
+import DatePicker from "react-native-modern-datepicker";
 import userContext from "../context/UserProvider";
-import { db, firebase } from "../firebase";
-import DatePicker, { getFormatedDate } from "react-native-modern-datepicker";
-import moment from 'moment'
+import { db } from "../firebase";
+import LoadingComponent from "../components/LoadingComponent";
 
-const EditProfile = ({navigation}) => {
+const EditProfile = ({ navigation }) => {
   const onPressBack = () => {
     navigation.goBack();
   };
+
   const onPressSave = () => {
     console.log(`save button pressed`);
   };
-  const today = new Date();
+
   const { userDetails } = useContext(userContext);
   const [name, setName] = useState(userDetails.username);
   // console.log(userDetails);
-  const [email, setEmail] = useState(userDetails.email);
   const [password, setPassword] = useState("randompassword");
   const [country, setCountry] = useState("Telangana, India");
   const [bio, setBio] = useState("Bio");
   const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(userDetails?.image || 'https://cimentlawfirm.com/wp-content/uploads/2021/03/dummy-profile.png');
-  const startDate = moment('1990-01-01').format('YYYY/MM/DD');
+  const [selectedImage, setSelectedImage] = useState(
+    userDetails?.image ||
+      "https://cimentlawfirm.com/wp-content/uploads/2021/03/dummy-profile.png"
+  );
+  const startDate = moment("1990-01-01").format("YYYY/MM/DD");
   const [selectedStartDate, setSelectedStartDate] = useState("01/01/1990");
   const [startedDate, setStartedDate] = useState("01/01/1990");
   const [isPasswordVisible, setPasswordVisibility] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!isPasswordVisible);
@@ -67,11 +67,14 @@ const EditProfile = ({navigation}) => {
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
     }
-  }
+  };
   const uploadPostToFire = async (
-    name,password,country,bio,selectedImage
+    name,
+    password,
+    country,
+    bio,
+    selectedImage
   ) => {
-
     const response = await fetch(selectedImage);
     const blob = await response.blob();
 
@@ -81,26 +84,30 @@ const EditProfile = ({navigation}) => {
       reader.onerror = (error) => reject(error);
       reader.readAsDataURL(blob);
     });
+    setIsLoading(true);
 
     db.collection("users")
-      .doc(userDetails.uid).set({
-        username: name,
-        // email: email,
-        image: base64Image,
-        bio: bio,
-        country: country,
-        password: password
-      },{merge: true})
+      .doc(userDetails.email)
+      .set(
+        {
+          username: name,
+          image: base64Image,
+          bio: bio,
+          country: country,
+        },
+        { merge: true }
+      )
       .then(() => {
         // Reset state after successful upload
-        console.log("Success")
+        console.log("Success");
         navigation.goBack();
       })
       .catch((error) => {
         console.log("Error uploading post:", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
-  
+
   function renderDatePicker() {
     return (
       <Modal
@@ -152,25 +159,24 @@ const EditProfile = ({navigation}) => {
             />
 
             <TouchableOpacity onPress={handleOnPressStartDate}>
-              <Text style={{  fontSize: 16, lineHeight: 22, color: "#FFF" }}>Close</Text>
+              <Text style={{ fontSize: 16, lineHeight: 22, color: "#FFF" }}>
+                Close
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
     );
   }
-  const saveChange=()=>{
-    uploadPostToFire(
-      name,password,country,bio,selectedImage
-    )
-  }
-
+  const saveChange = () => {
+    uploadPostToFire(name, password, country, bio, selectedImage);
+  };
 
   // console.log(userDetails)
   return (
     <>
       <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={onPressBack}> 
+        <TouchableOpacity style={styles.backButton} onPress={onPressBack}>
           <MaterialIcons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
 
@@ -182,149 +188,146 @@ const EditProfile = ({navigation}) => {
       </View>
       {/* // marker */}
       <View
+        style={{
+          alignItems: "center",
+          marginVertical: 22,
+        }}
+      >
+        <TouchableOpacity onPress={handleImageSelection}>
+          <Image
+            source={{ uri: selectedImage }}
+            style={{
+              height: 130,
+              width: 130,
+              borderRadius: 85,
+              borderWidth: 2,
+              borderColor: "#0080ff",
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 10,
+              zIndex: 9999,
+            }}
+          >
+            <MaterialIcons name="photo-camera" size={32} color={"#0080ff"} />
+          </View>
+        </TouchableOpacity>
+      </View>
+      {/* marker */}
+      {/* marker2 */}
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Name
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={name}
+            onChangeText={(value) => setName(value)}
+            editable={true}
+          />
+        </View>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Your Password
+        </Text>
+        <View
           style={{
-            alignItems: "center",
-            marginVertical: 22,
+            height: 44,
+            width: "100%",
+            borderColor: "rgba(84, 76, 76, 0.14)",
+            borderWidth: 1,
+            borderRadius: 4,
+            marginVertical: 6,
+            justifyContent: "center",
+            paddingLeft: 8,
+            flexDirection: "row",
           }}
         >
-          <TouchableOpacity onPress={handleImageSelection}>
-            <Image
-              source={{uri:selectedImage}}
-              style={{
-                height: 130,
-                width: 130,
-                borderRadius: 85,
-                borderWidth: 2,
-                borderColor: "#0080ff",
-              }}
+          <TextInput
+            value={password}
+            onChangeText={(value) => setPassword(value)}
+            editable={true}
+            secureTextEntry={!isPasswordVisible}
+            style={{ flex: 1 }}
+          />
+          <TouchableOpacity
+            onPress={togglePasswordVisibility}
+            style={{ paddingTop: 8, paddingRight: 8 }}
+          >
+            <Feather
+              name={isPasswordVisible ? "eye" : "eye-off"}
+              size={20}
+              color={isPasswordVisible ? "#0080ff" : "gray"} // Change icon color based on visibility state
             />
-            <View
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 10,
-                zIndex: 9999,
-              }}
-            >
-              <MaterialIcons
-                name="photo-camera"
-                size={32}
-                color={"#0080ff"}
-              />
-            </View>
           </TouchableOpacity>
         </View>
-        {/* marker */}
-        {/* marker2 */}
-        <View
-          style={styles.overallFieldView}
-        >
-          <Text style={{fontWeight: 'bold', fontSize: 16, lineHeight: 20 }}>Name</Text>
-          <View
-            style={styles.fieldBoxView}
-          >
-            <TextInput
-              value={name}
-              onChangeText={(value) => setName(value)}
-              editable={true}
-            />
-          </View>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Location
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={country}
+            onChangeText={(value) => setCountry(value)}
+            editable={true}
+          />
         </View>
-        <View 
-          style={styles.overallFieldView}
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Date of Birth
+        </Text>
+        <TouchableOpacity
+          onPress={handleOnPressStartDate}
+          style={styles.fieldBoxView}
         >
-          <Text style={{fontWeight: 'bold', fontSize: 16, lineHeight: 20 }}>Your Password</Text>
-          <View
-            style={{
-              height: 44,
-              width: "100%",
-              borderColor: "rgba(84, 76, 76, 0.14)",
-              borderWidth: 1,
-              borderRadius: 4,
-              marginVertical: 6,
-              justifyContent: "center",
-              paddingLeft: 8,
-              flexDirection: "row"
-            }}
-          >
-            <TextInput
-              value={password}
-              onChangeText={(value) => setPassword(value)}
-              editable={true}
-              secureTextEntry={!isPasswordVisible}
-              style={{ flex: 1 }}
-            />
-            <TouchableOpacity onPress={togglePasswordVisibility} 
-            style={{ paddingTop: 8,paddingRight: 8 }}>
-              <Feather
-                name={isPasswordVisible ? 'eye' : 'eye-off'}
-                size={20}
-                color={isPasswordVisible ? '#0080ff' : 'gray'} // Change icon color based on visibility state
-              />
-            </TouchableOpacity>
-          </View>
+          <Text>{selectedStartDate}</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Tell me about yourself
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={bio}
+            onChangeText={(value) => setBio(value)}
+            editable={true}
+          />
         </View>
-        <View
-          style={styles.overallFieldView}
+        <TouchableOpacity
+          style={{
+            backgroundColor: !isLoading ? "#0398fc" : "#AEB0AD",
+            height: 44,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPress={saveChange}
+          disabled={isLoading}
         >
-          <Text style={{fontWeight: 'bold', fontSize: 16, lineHeight: 20 }}>Location</Text>
-          <View
-            style={styles.fieldBoxView}
-          >
-            <TextInput
-              value={country}
-              onChangeText={(value) =>setCountry(value)}
-              editable={true}
-            />
-          </View>
-        </View>
-        <View
-            style={styles.overallFieldView}
-          >
-            <Text style={{fontWeight: 'bold', fontSize: 16, lineHeight: 20}}>Date of Birth</Text>
-            <TouchableOpacity
-              onPress={handleOnPressStartDate}
-              style={styles.fieldBoxView}
-            >
-              <Text>{selectedStartDate}</Text>
-            </TouchableOpacity>
-          </View>
-        <View
-          style={styles.overallFieldView}
-        >
-          <Text style={{fontWeight: 'bold', fontSize: 16, lineHeight: 20 }}>Tell me about yourself</Text>
-          <View
-            style={styles.fieldBoxView}
-          >
-            <TextInput
-              value={bio}
-              onChangeText={(value) =>setBio(value)}
-              editable={true}
-            />
-          </View>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "#0398fc",
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onPress={saveChange}
-          >
+          {isLoading ? (
+            <LoadingComponent />
+          ) : (
             <Text
               style={{
                 // fontFamily: 'regular',
-                fontSize: 18, 
+                fontSize: 18,
                 lineHeight: 22,
-                color: '#FFFFFF',
+                color: "#FFFFFF",
               }}
             >
               Save Changes
             </Text>
-          </TouchableOpacity>
-          {renderDatePicker()}
-        </View>
-        {/* marker2 */}
+          )}
+        </TouchableOpacity>
+        {renderDatePicker()}
+      </View>
+      {/* marker2 */}
     </>
   );
 };
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
   overallFieldView: {
     flexDirection: "column",
     marginBottom: 6,
-    paddingHorizontal: 22
+    paddingHorizontal: 22,
   },
   fieldBoxView: {
     height: 44,
@@ -373,7 +376,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     justifyContent: "center",
     paddingLeft: 8,
-  }
-})
+  },
+});
 
 export default EditProfile;

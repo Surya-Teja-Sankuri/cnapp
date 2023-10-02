@@ -1,287 +1,201 @@
-import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import Validator from "email-validator";
+import { Formik } from "formik";
+import React, { useContext, useState } from "react";
 import {
-  View,
+  Alert,
+  Button,
   StyleSheet,
   Text,
-  SafeAreaView,
-  Pressable,
   TextInput,
-  Button,
-  Alert,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { Formik } from "formik";
 import * as Yup from "yup";
-import Validator from "email-validator";
-import { db, firebase } from "../firebase";
+import userContext from "../context/UserProvider";
+import authService from "../firebase_services/auth";
+import LoadingComponent from "../components/LoadingComponent";
 
-const Signup = (props) => {
-  const LoginFormSchema = Yup.object().shape({
+const Signup = ({ navigation }) => {
+  const signUpFormSchema = Yup.object().shape({
     email: Yup.string().email().required("An email is required"),
     password: Yup.string()
       .required()
       .min(6, "your password has to have atleast 8 characters"),
   });
+  const { userDetails, setUserDetails } = useContext(userContext);
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const onSignup = async (email, password, username) => {
-    try {
-      const authUser = await firebase
-        .auth()
-        .createUserWithEmailAndPassword(email, password);
-      console.log("created user", email, password);
-      db.collection("users").doc(authUser.user.email).set({
-        owner_uid: authUser.user.uid,
-        username: username,
-        email: authUser.user.email,
-      });
-    } catch (error) {
-      Alert.alert("invalid username or password", error.message);
-    }
+    setIsLoading(true);
+    await authService
+      .createAccount({ email, password, username })
+      .then(async (user) => {
+        const userdata = await authService.getUserInfo(user.email);
+        setUserDetails(userdata);
+      })
+      .catch((error) => {
+        Alert.alert(error.message);
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
-    <SafeAreaView
-      style={{
-        alignItems: "center",
-        width: '100%',
-        height: '100%',
-        backgroundColor: "white",
-      }}
-    >
+    <View style={styles.container}>
+      <Text style={styles.title}>cNature</Text>
       <Formik
-        initialValues={{
-          username: "",
-          email: "",
-          password: "",
-          confirmpassword: "",
-        }}
-        onSubmit={(values) => {
-          onSignup(values.email, values.password, values.username);
-        }}
-        validationSchema={LoginFormSchema}
+        initialValues={{ username: "", email: "", password: "" }}
+        onSubmit={(values) =>
+          onSignup(values.email, values.password, values.username)
+        }
+        validationSchema={signUpFormSchema}
         validateOnMount={true}
       >
-        {({ handleChange, handleBlur, handleSubmit, values, isValid }) => (
-          <>
-            <Text
-              style={{
-                color: "black",
-                fontSize: 40,
-                fontWeight: "bold",
-                marginVertical: 100,
-              }}
-            >
-              cNature
-            </Text>
-
-            <View
-              style={{
-                height: 500,
-                width: 350,
-
-                paddingTop: 1,
-              }}
-            >
-              <Text
-                style={{
-                  color: "black",
-                  fontSize: 13,
-                  fontWeight: "bold",
-                  marginBottom: 1,
-                  marginLeft: 40,
-                }}
-              >
-                Username
-              </Text>
-              <View
-                style={[
-                  styles.inputfield,
-                  {
-                    borderColor:
-                      1 > values.password.length || values.password.length >= 2
-                        ? "#ccc"
-                        : "red",
-                  },
-                ]}
-              >
-                <TextInput
-                  placeholderTextColor="#444"
-                  placeholder="username"
-                  autoCapitalize="none"
-                  textContentType="username"
-                  autoFocus={true}
-                  onChangeText={handleChange("username")}
-                  onBlur={handleBlur("username")}
-                  value={values.username}
-                />
-              </View>
-              <Text
-                style={{
-                  color: "black",
-                  fontSize: 13,
-                  fontWeight: "bold",
-                  marginBottom: 1,
-                  marginLeft: 40,
-                }}
-              >
-                Email
-              </Text>
-              <View
-                style={[
-                  styles.inputfield,
-                  {
-                    borderColor:
-                      values.email.length < 1 ||
-                      Validator.validate(values.email)
-                        ? "#ccc"
-                        : "red",
-                  },
-                ]}
-              >
-                <TextInput
-                  placeholderTextColor="#444"
-                  placeholder="example@gmail.com"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  textContentType="emailAddress"
-                  autoFocus={true}
-                  onChangeText={handleChange("email")}
-                  onBlur={handleBlur("email")}
-                  value={values.email}
-                />
-              </View>
-              <Text
-                style={{
-                  color: "black",
-                  fontSize: 13,
-                  fontWeight: "bold",
-                  marginBottom: 1,
-                  marginLeft: 40,
-                }}
-              >
-                Password
-              </Text>
-              <View
-                style={[
-                  styles.inputfield,
-                  {
-                    borderColor:
-                      1 > values.password.length || values.password.length >= 6
-                        ? "#ccc"
-                        : "red",
-                  },
-                ]}
-              >
-                <TextInput
-                  placeholderTextColor="#444"
-                  placeholder="********"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry={true}
-                  textContentType="password"
-                  onChangeText={handleChange("password")}
-                  onBlur={handleBlur("password")}
-                  value={values.password}
-                />
-              </View>
-              <Text
-                style={{
-                  color: "black",
-                  fontSize: 13,
-                  fontWeight: "bold",
-                  marginBottom: 1,
-                  marginLeft: 40,
-                }}
-              >
-                Confirm Password
-              </Text>
-              <View
-                style={[
-                  styles.inputfield,
-                  {
-                    borderColor:
-                      1 > values.confirmpassword.length ||
-                      values.password == values.confirmpassword
-                        ? "#ccc"
-                        : "red",
-                  },
-                ]}
-              >
-                <TextInput
-                  placeholderTextColor="#444"
-                  placeholder="********"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry={true}
-                  textContentType="password"
-                  onChangeText={handleChange("confirmpassword")}
-                  onBlur={handleBlur("confirmpassword")}
-                  value={values.confirmpassword}
-                />
-              </View>
-              <Pressable
-                titleSize={20}
-                style={styles.button(isValid)}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.buttontext}>Signup</Text>
-              </Pressable>
-              <View style={styles.signupcont}>
-                <Text>Don't have an account?</Text>
-                <TouchableOpacity
-                  onPress={() => props.navigation.goBack()}
-                >
-                  <Text
-                    style={{
-                      color: "#24ba9f",
-                      fontWeight: "bold",
-                      textDecorationLine: "underline",
-                    }}
-                  >
-                    {" "}
-                    Login
-                  </Text>
-                </TouchableOpacity>
-              </View>
+        {({ handleChange, handleBlur, handleSubmit, values }) => (
+          <View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person"
+                size={24}
+                color="gray"
+                style={styles.icon}
+              />
+              <TextInput
+                placeholder="Username"
+                onChangeText={handleChange("username")}
+                value={values.username}
+                style={styles.input}
+                autoFocus
+              />
             </View>
-          </>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  borderColor:
+                    values.email.length < 1 || Validator.validate(values.email)
+                      ? "#ccc"
+                      : "red",
+                },
+              ]}
+            >
+              <Ionicons
+                name="mail"
+                size={24}
+                color="gray"
+                style={styles.icon}
+              />
+              <TextInput
+                placeholder="Email"
+                onChangeText={handleChange("email")}
+                value={values.email}
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                onBlur={handleBlur("email")}
+                style={styles.input}
+              />
+            </View>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  borderColor:
+                    values.password.length < 1 || values.password.length >= 6
+                      ? "#ccc"
+                      : "red",
+                },
+              ]}
+            >
+              <Ionicons
+                name="lock-closed"
+                size={24}
+                color="gray"
+                style={styles.icon}
+              />
+              <TextInput
+                placeholder="Password"
+                onChangeText={handleChange("password")}
+                value={values.password}
+                secureTextEntry
+                style={styles.input}
+              />
+            </View>
+            <TouchableOpacity
+              style={{
+                height: 50,
+                padding: 10,
+                backgroundColor: !isLoading ? "#3FCF01" : "#AEB0AD",
+                borderRadius: 5,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              disabled={isLoading}
+              onPress={handleSubmit}
+            >
+              {isLoading ? <LoadingComponent /> : <Text>Sign Up</Text>}
+            </TouchableOpacity>
+          </View>
         )}
       </Formik>
-    </SafeAreaView>
+      <View style={styles.signupcont}>
+        <Text>Don't have an account?</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text
+            style={{
+              color: "#24ba9f",
+              fontWeight: "bold",
+              textDecorationLine: "underline",
+            }}
+          >
+            {" "}
+            Login
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 const styles = StyleSheet.create({
-  wrapper: {
-    marginTop: 80,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "white",
   },
-  inputfield: {
-    borderRadius: 25,
-    padding: 12,
-    backgroundColor: "#fff",
-    marginBottom: 10,
+  title: {
+    fontSize: 40,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+    paddingHorizontal: 10,
     borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 20,
     width: "80%",
-    marginLeft: 25,
+    height: 50,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+  },
+  button: {
+    marginTop: 20,
+    borderRadius: 20,
   },
   signupcont: {
     flexDirection: "row",
     width: "100%",
     justifyContent: "center",
-    marginTop: 50,
-  },
-  button: (isValid) => ({
-    backgroundColor: "#24ba9f",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 42,
-    borderRadius: 25,
-    width: "80%",
-    marginLeft: 25,
-    marginTop: 15,
-  }),
-  buttontext: {
-    fontWeight: "600",
-    color: "black",
-    fontSize: 20,
+    marginTop: 20,
   },
 });
 

@@ -65,9 +65,7 @@ export default function Tabs({ navigation }) {
         name="Post"
         component={Postform}
         options={{
-          tabBarIcon: () => (
-            <Feather name="plus" size={45} color="#044e5e" />
-          ),
+          tabBarIcon: () => <Feather name="plus" size={45} color="#044e5e" />,
           tabBarButton: (props) => (
             <CustomPostButton {...props} navigation={navigation} />
           ),

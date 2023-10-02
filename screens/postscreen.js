@@ -7,7 +7,6 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Platform,
   Button,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -15,10 +14,13 @@ import { Feather } from "@expo/vector-icons";
 import { db, firebase } from "../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import userContext from "../context/UserProvider";
+import * as Location from "expo-location";
 import LoadingComponent from "../components/LoadingComponent";
 
-const Postform = ({ navigation }) => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
+const Postform = ({ navigation, route }) => {
+  const [selectedLocation, setSelectedLocation] = useState(
+    route?.params?.data || null
+  );
   const [image, setImage] = useState(null);
   const [description, setDescription] = useState("");
   const [species, setSpecies] = useState("");
@@ -27,14 +29,32 @@ const Postform = ({ navigation }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const getPermission = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Location permission not granted");
+        return;
+      }
+
+      const { coords } = await Location.getCurrentPositionAsync();
+      const latitude = coords.latitude;
+      const longitude = coords.longitude;
+      setSelectedLocation({ latitude, longitude });
+    };
+    getPermission();
+  }, []);
+
   const handleLocationPress = () => {
     navigation.navigate("mapScreen", {
-      setSelectedLocation: setSelectedLocation,
+      selectedLocation,
+      onGoBack: (data) => {
+        setSelectedLocation(data);
+      },
     });
   };
 
   const { userDetails } = useContext(userContext);
-  // console.log(userDetails);
 
   const uploadPostToFire = async (
     image,
@@ -43,11 +63,10 @@ const Postform = ({ navigation }) => {
     subspecies,
     location
   ) => {
-    setIsLoading(true);
-
     const response = await fetch(image);
     const blob = await response.blob();
 
+    setIsLoading(true);
     const base64Image = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -58,7 +77,6 @@ const Postform = ({ navigation }) => {
     db.collection("posts")
       .add({
         username: userDetails.username,
-        owner_uid: userDetails.owner_uid,
         owner_email: userDetails.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         image: base64Image,
@@ -77,13 +95,13 @@ const Postform = ({ navigation }) => {
         setSpecies("");
         setSubSpecies("");
         setSelectedLocation(null);
-        setIsLoading(false);
         // Go back to previous screen
         navigation.goBack();
       })
       .catch((error) => {
         console.log("Error uploading post:", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const selectImageFromCamera = async () => {
@@ -95,7 +113,7 @@ const Postform = ({ navigation }) => {
 
     let pickerResult = await ImagePicker.launchCameraAsync();
     if (!pickerResult.canceled) {
-      setImage(pickerResult.uri);
+      setImage(pickerResult.assets[0].uri);
     }
   };
 
@@ -158,20 +176,30 @@ const Postform = ({ navigation }) => {
 
   return (
     <>
-      {isLoading ? (
-        <LoadingComponent />
-      ) : (
-        <>
-          <View style={styles.headerContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Feather name="arrow-left" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Post</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Feather name="arrow-left" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Post</Text>
+      </View>
+      <>
+        {isLoading ? (
+          <View
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#C5C5C5",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <LoadingComponent />
           </View>
-
+        ) : (
           <ScrollView>
             <View style={styles.container}>
               <TouchableOpacity
@@ -251,8 +279,8 @@ const Postform = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </>
-      )}
+        )}
+      </>
     </>
   );
 };

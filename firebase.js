@@ -1,22 +1,23 @@
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
-
+import { getAuth } from "firebase/auth";
 // Initialize Firebase
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB-Vd1R-XLd653XTABwoV54IzTJL2HVznw",
-  authDomain: "cnatureapp.firebaseapp.com",
-  projectId: "cnatureapp",
-  storageBucket: "cnatureapp.appspot.com",
-  messagingSenderId: "528097178665",
-  appId: "1:528097178665:web:e6dca83c492d96aa5b5838",
-  measurementId: "G-J5ND5EZ9TX",
+  apiKey: "AIzaSyAn98kI2QBcy8xCTZ59KSke4GIY5trEUHE",
+  authDomain: "cnature-app.firebaseapp.com",
+  projectId: "cnature-app",
+  storageBucket: "cnature-app.appspot.com",
+  messagingSenderId: "111602365809",
+  appId: "1:111602365809:web:d5c2ed8a59d5006ae1f2d0",
+  measurementId: "G-CFB6N7YBKW",
 };
 const firebaseApp = !firebase.apps.length
   ? firebase.initializeApp(firebaseConfig)
   : firebase.app();
 
+const firebaseAuth = getAuth(firebaseApp);
 const db = firebase.firestore();
 
-export { firebase, db };
+export { firebase, db, firebaseAuth };

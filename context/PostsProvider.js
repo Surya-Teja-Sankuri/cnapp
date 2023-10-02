@@ -1,34 +1,42 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { onSnapshot } from 'firebase/firestore';
+import React, { createContext, useState, useEffect } from "react";
+import { db } from "../firebase";
 
 const postContext = createContext();
 
 export const PostsProvider = ({ children }) => {
-    const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
 
-    const fetchPosts = () => {
-        try {
-
-            onSnapshot(db.collection("posts").orderBy("createdAt", "desc"), (d) => {
-                setPosts(d.docs.map((post) => {
-                    return { ...post.data(), id: post.id };
-                }))
+  const fetchPosts = () => {
+    console.log("inside post provider");
+    try {
+      db.collection("posts").onSnapshot(
+        (snapshot) => {
+          setPosts(
+            snapshot.docs.map((post) => {
+              return {
+                ...post.data(),
+                id: post.id,
+              };
             })
-
-        } catch (error) {
-            console.log("Error fetching posts:", error);
+          );
+        },
+        (error) => {
+          console.log("at post provider ", error);
         }
-    };
-    useEffect(() => {
-        fetchPosts();
-    }, []);
+      );
+    } catch (error) {
+      console.log("Error fetching posts:", error);
+    }
+  };
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
-    return (
-        <postContext.Provider value={{ posts, setPosts }}>
-            {children}
-        </postContext.Provider>
-    );
-}
+  return (
+    <postContext.Provider value={{ posts, setPosts }}>
+      {children}
+    </postContext.Provider>
+  );
+};
 
 export default postContext;
