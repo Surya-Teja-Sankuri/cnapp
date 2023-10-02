@@ -1,95 +1,25 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import moment from "moment";
 import {
-  View,
+  Image,
+  Modal,
+  Platform,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  Image,
   TouchableOpacity,
-  ScrollView,
-  FlatList,
-  Alert,
-  ImageBackground,
+  View,
 } from "react-native";
-import { MaterialIcons, Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import DatePicker from "react-native-modern-datepicker";
 import userContext from "../context/UserProvider";
-import postContext from "../context/PostsProvider";
-import { AntDesign } from "@expo/vector-icons";
-import { db, firebase } from "../firebase";
-const EditProfile = ({ searchFilter }) => {
-  const deletePost = (postId) => {
-    // Display an alert to confirm the deletion
-    Alert.alert(
-      "Delete Post",
-      "Are you sure you want to delete this post?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          onPress: () => {
-            // Delete the post from the database
-            db.collection("posts")
-              .doc(postId)
-              .delete()
-              .then(() => {
-                console.log("Post deleted successfully!");
-                // Update the filtered posts state by removing the deleted post
-                setFilteredPosts((prevPosts) =>
-                  prevPosts.filter((post) => post.id !== postId)
-                );
-              })
-              .catch((error) => {
-                console.error("Error deleting post: ", error);
-              });
-          },
-          style: "destructive",
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-  const user = firebase.auth().currentUser;
-  const { posts } = useContext(postContext);
-  const numColumns = 2;
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const navigation = useNavigation();
-  const { userDetails } = useContext(userContext);
-  useEffect(() => {
-    // Filter the posts based on owner_uid
-    const filtered = posts.filter(
-      (post) => post.owner_uid === userDetails.owner_uid
-    );
-    setFilteredPosts(filtered);
-  }, [posts, userDetails.uid]);
-  const renderItem = ({ item, index }) => {
-    return (
-      <TouchableOpacity
-        onPress={() => navigation.navigate("postDetails", { item: item })}
-      >
-        <View style={styles.imgContainer} key={index}>
-          <TouchableOpacity
-            style={styles.deleteButton} // Add a style for the delete button
-            onPress={() => deletePost(item.id)} // Call the deletePost function with the post ID
-          >
-            <MaterialIcons name="delete" size={24} color="red" />
-          </TouchableOpacity>
-          <Image source={{ uri: item.image }} style={styles.postcss} />
-          <View style={styles.imgTxtContainer}>
-            <Text style={styles.imgTxt}>{item.species}</Text>
-            {item.verified && (
-              <AntDesign name="checkcircle" size={24} color="lightgreen" />
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+import { db } from "../firebase";
+import LoadingComponent from "../components/LoadingComponent";
 
+const EditProfile = ({ navigation }) => {
   const onPressBack = () => {
     navigation.goBack();
   };
@@ -98,9 +28,153 @@ const EditProfile = ({ searchFilter }) => {
     console.log(`save button pressed`);
   };
 
+  const { userDetails } = useContext(userContext);
+  const [name, setName] = useState(userDetails.username);
+  // console.log(userDetails);
+  const [password, setPassword] = useState("randompassword");
+  const [country, setCountry] = useState("Telangana, India");
+  const [bio, setBio] = useState("Bio");
+  const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(
+    userDetails?.image ||
+      "https://cimentlawfirm.com/wp-content/uploads/2021/03/dummy-profile.png"
+  );
+  const startDate = moment("1990-01-01").format("YYYY/MM/DD");
+  const [selectedStartDate, setSelectedStartDate] = useState("01/01/1990");
+  const [startedDate, setStartedDate] = useState("01/01/1990");
+  const [isPasswordVisible, setPasswordVisibility] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisibility(!isPasswordVisible);
+  };
+
+  const handleChangeStartDate = (propDate) => {
+    setStartedDate(propDate);
+  };
+
+  const handleOnPressStartDate = () => {
+    setOpenStartDatePicker(!openStartDatePicker);
+  };
+
+  const handleImageSelection = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 4],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+  const uploadPostToFire = async (
+    name,
+    password,
+    country,
+    bio,
+    selectedImage
+  ) => {
+    const response = await fetch(selectedImage);
+    const blob = await response.blob();
+
+    const base64Image = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(blob);
+    });
+    setIsLoading(true);
+
+    db.collection("users")
+      .doc(userDetails.email)
+      .set(
+        {
+          username: name,
+          image: base64Image,
+          bio: bio,
+          country: country,
+        },
+        { merge: true }
+      )
+      .then(() => {
+        // Reset state after successful upload
+        console.log("Success");
+        navigation.goBack();
+      })
+      .catch((error) => {
+        console.log("Error uploading post:", error);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  function renderDatePicker() {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={openStartDatePicker}
+      >
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <View
+            style={{
+              margin: 20,
+              backgroundColor: "#242760",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 20,
+              padding: 35,
+              width: "90%",
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}
+          >
+            <DatePicker
+              mode="calendar"
+              minimumDate={startDate}
+              selected={startedDate}
+              onDateChanged={handleChangeStartDate}
+              onSelectedChange={(date) => setSelectedStartDate(date)}
+              options={{
+                backgroundColor: "#242760",
+                textHeaderColor: "#469ab6",
+                textDefaultColor: "#FFF",
+                selectedTextColor: "#FFF",
+                mainColor: "#469ab6",
+                textSecondaryColor: "#FFF",
+                borderColor: "rgba(122,146,165,0.1)",
+              }}
+            />
+
+            <TouchableOpacity onPress={handleOnPressStartDate}>
+              <Text style={{ fontSize: 16, lineHeight: 22, color: "#FFF" }}>
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+  const saveChange = () => {
+    uploadPostToFire(name, password, country, bio, selectedImage);
+  };
+
+  // console.log(userDetails)
   return (
     <>
-      {/* <View style={styles.container}> */}
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onPressBack}>
           <MaterialIcons name="arrow-back" size={24} color="black" />
@@ -112,97 +186,160 @@ const EditProfile = ({ searchFilter }) => {
           <MaterialIcons name="check" size={24} color="white" />
         </TouchableOpacity>
       </View>
-
-      <ScrollView>
-        <ImageBackground
-          source={require("../assets/bluegreen.jpg")}
-          style={styles.profileContainer}
-        >
-          <View style={styles.profileInfoContainer}>
-            <Text style={styles.profileNameText}>{userDetails.username}</Text>
-            <Text style={styles.profileEmailText}>{userDetails.email}</Text>
+      {/* // marker */}
+      <View
+        style={{
+          alignItems: "center",
+          marginVertical: 22,
+        }}
+      >
+        <TouchableOpacity onPress={handleImageSelection}>
+          <Image
+            source={{ uri: selectedImage }}
+            style={{
+              height: 130,
+              width: 130,
+              borderRadius: 85,
+              borderWidth: 2,
+              borderColor: "#0080ff",
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 10,
+              zIndex: 9999,
+            }}
+          >
+            <MaterialIcons name="photo-camera" size={32} color={"#0080ff"} />
           </View>
-
-          <View style={styles.profilePictureContainer}>
-            <Image
-              style={styles.profilePicture}
-              source={require("../assets/profilepicture.jpg")} // Replace with your own profile picture source
-            />
-          </View>
-        </ImageBackground>
-
-        <View style={styles.infoContainer}>
-          <View style={styles.inputContainer}>
-            <MaterialIcons
-              name="person"
-              size={24}
-              color="#888"
-              style={styles.icon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="username"
-              // onChangeText={onChangeText}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Feather name="user" size={24} color="#888" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="name"
-              // onChangeText={onChangeText}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <MaterialIcons
-              name="description"
-              size={24}
-              color="#888"
-              style={styles.icon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="tell us about yourself"
-              multiline
-              // onChangeText={onChangeText}
-            />
-          </View>
-        </View>
-        <View style={styles.observationContainer}>
-          <Text>MY OBSERVATONS</Text>
-        </View>
-        <View style={styles.postContainer}>
-          <FlatList
-            data={filteredPosts}
-            renderItem={renderItem}
-            numColumns={numColumns}
-            style={styles.flatlistItems}
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={styles.postContainer}
+        </TouchableOpacity>
+      </View>
+      {/* marker */}
+      {/* marker2 */}
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Name
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={name}
+            onChangeText={(value) => setName(value)}
+            editable={true}
           />
         </View>
-      </ScrollView>
-
-      {/* </View> */}
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Your Password
+        </Text>
+        <View
+          style={{
+            height: 44,
+            width: "100%",
+            borderColor: "rgba(84, 76, 76, 0.14)",
+            borderWidth: 1,
+            borderRadius: 4,
+            marginVertical: 6,
+            justifyContent: "center",
+            paddingLeft: 8,
+            flexDirection: "row",
+          }}
+        >
+          <TextInput
+            value={password}
+            onChangeText={(value) => setPassword(value)}
+            editable={true}
+            secureTextEntry={!isPasswordVisible}
+            style={{ flex: 1 }}
+          />
+          <TouchableOpacity
+            onPress={togglePasswordVisibility}
+            style={{ paddingTop: 8, paddingRight: 8 }}
+          >
+            <Feather
+              name={isPasswordVisible ? "eye" : "eye-off"}
+              size={20}
+              color={isPasswordVisible ? "#0080ff" : "gray"} // Change icon color based on visibility state
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Location
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={country}
+            onChangeText={(value) => setCountry(value)}
+            editable={true}
+          />
+        </View>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Date of Birth
+        </Text>
+        <TouchableOpacity
+          onPress={handleOnPressStartDate}
+          style={styles.fieldBoxView}
+        >
+          <Text>{selectedStartDate}</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.overallFieldView}>
+        <Text style={{ fontWeight: "bold", fontSize: 16, lineHeight: 20 }}>
+          Tell me about yourself
+        </Text>
+        <View style={styles.fieldBoxView}>
+          <TextInput
+            value={bio}
+            onChangeText={(value) => setBio(value)}
+            editable={true}
+          />
+        </View>
+        <TouchableOpacity
+          style={{
+            backgroundColor: !isLoading ? "#0398fc" : "#AEB0AD",
+            height: 44,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPress={saveChange}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <LoadingComponent />
+          ) : (
+            <Text
+              style={{
+                // fontFamily: 'regular',
+                fontSize: 18,
+                lineHeight: 22,
+                color: "#FFFFFF",
+              }}
+            >
+              Save Changes
+            </Text>
+          )}
+        </TouchableOpacity>
+        {renderDatePicker()}
+      </View>
+      {/* marker2 */}
     </>
   );
 };
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginTop: 35,
-  },
   headerContainer: {
-    marginTop: 35,
+    marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    backgroundColor: "white",
+    backgroundColor: "#C9FFA8",
     elevation: 4, // Add elevation for border shadow (Android)
     shadowColor: "#000", // Add shadow properties for border shadow (iOS)
     shadowOffset: { width: 0, height: 2 },
@@ -221,105 +358,24 @@ const styles = StyleSheet.create({
   },
   checkButton: {
     padding: 5,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#0398fc",
+    // backgroundColor: "#4CAF50",
     borderRadius: 5,
   },
-  profileContainer: {
-    flexDirection: "row",
-    // width: "100%",
-    paddingHorizontal: 40,
-    paddingVertical: 40,
-    backgroundColor: "lightgrey",
-    marginBottom: 30,
+  overallFieldView: {
+    flexDirection: "column",
+    marginBottom: 6,
+    paddingHorizontal: 22,
   },
-  profileInfoContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
-  profileNameText: {
-    fontSize: 20,
-    fontWeight: 600,
-  },
-  profilePictureContainer: {
-    width: 80,
-    alignItems: "center",
+  fieldBoxView: {
+    height: 44,
+    width: "100%",
+    borderColor: "rgba(84, 76, 76, 0.14)",
+    borderWidth: 1,
+    borderRadius: 4,
+    marginVertical: 6,
     justifyContent: "center",
-  },
-  profilePicture: {
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-  },
-  infoContainer: {
-    alignItems: "center",
-    paddingLeft: 10,
-    gap: 15,
-    width: "90%",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderColor: "#888",
-    paddingBottom: 5,
-    marginBottom: 20,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  observationContainer: {
-    backgroundColor: "grey",
-    width: "100%",
-    alignItems: "center",
-    padding: 10,
-  },
-  imgContainer: {
-    marginTop: 15,
-    // margin: 10,
-    marginBottom: 7,
-    marginLeft: 10,
-    marginHorizontal: "auto",
-    position: "relative",
-  },
-  imgTxt: {
-    color: "white",
-    fontSize: 15,
-  },
-  imgTxtContainer: {
-    position: "absolute",
-    bottom: 0,
-    backgroundColor: "rgba(28, 28, 28, 0.7)",
-    width: "100%",
-    borderBottomRightRadius: 15,
-    borderBottomLeftRadius: 15,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  postContainer: {
-    marginBottom: 170,
-    alignItems: "center",
-  },
-  postcss: {
-    width: 150,
-    height: 150,
-    borderRadius: 15,
-    borderWidth: 10,
-  },
-  deleteButton: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    zIndex: 1,
+    paddingLeft: 8,
   },
 });
 

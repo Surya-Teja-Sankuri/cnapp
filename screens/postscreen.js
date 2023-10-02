@@ -7,7 +7,6 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Platform,
   Button,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -18,8 +17,10 @@ import userContext from "../context/UserProvider";
 import * as Location from "expo-location";
 import LoadingComponent from "../components/LoadingComponent";
 
-const Postform = ({ navigation }) => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
+const Postform = ({ navigation, route }) => {
+  const [selectedLocation, setSelectedLocation] = useState(
+    route?.params?.data || null
+  );
   const [image, setImage] = useState(null);
   const [description, setDescription] = useState("");
   const [species, setSpecies] = useState("");
@@ -46,7 +47,10 @@ const Postform = ({ navigation }) => {
 
   const handleLocationPress = () => {
     navigation.navigate("mapScreen", {
-      setSelectedLocation: setSelectedLocation,
+      selectedLocation,
+      onGoBack: (data) => {
+        setSelectedLocation(data);
+      },
     });
   };
 
@@ -73,7 +77,6 @@ const Postform = ({ navigation }) => {
     db.collection("posts")
       .add({
         username: userDetails.username,
-        owner_uid: userDetails.owner_uid,
         owner_email: userDetails.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         image: base64Image,
@@ -92,13 +95,13 @@ const Postform = ({ navigation }) => {
         setSpecies("");
         setSubSpecies("");
         setSelectedLocation(null);
-        setIsLoading(false);
         // Go back to previous screen
         navigation.goBack();
       })
       .catch((error) => {
         console.log("Error uploading post:", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const selectImageFromCamera = async () => {
@@ -110,7 +113,7 @@ const Postform = ({ navigation }) => {
 
     let pickerResult = await ImagePicker.launchCameraAsync();
     if (!pickerResult.canceled) {
-      setImage(pickerResult.uri);
+      setImage(pickerResult.assets[0].uri);
     }
   };
 
@@ -184,7 +187,18 @@ const Postform = ({ navigation }) => {
       </View>
       <>
         {isLoading ? (
-          <LoadingComponent />
+          <View
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#C5C5C5",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <LoadingComponent />
+          </View>
         ) : (
           <ScrollView>
             <View style={styles.container}>

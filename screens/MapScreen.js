@@ -6,7 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 const MapScreen = ({ route }) => {
   const navigation = useNavigation();
   const [selectedLocation, setSelectedLocation] = useState(
-    route.params?.selectedLocation || { latitude: 0, longitude: 0 }
+    route.params?.selectedLocation || { latitude: 17, longitude: 78 }
   );
 
   const handleMapPress = (event) => {
@@ -15,9 +15,7 @@ const MapScreen = ({ route }) => {
   };
 
   const handleSaveLocation = () => {
-    if (route.params?.setSelectedLocation) {
-      route.params.setSelectedLocation(selectedLocation);
-    }
+    route.params?.onGoBack(selectedLocation);
     navigation.goBack();
   };
 

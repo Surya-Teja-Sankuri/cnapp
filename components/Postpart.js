@@ -7,7 +7,7 @@ import {
   Text,
   StyleSheet,
   StatusBar,
-  Platform
+  Platform,
 } from "react-native";
 import postContext from "../context/PostsProvider";
 import { AntDesign } from "@expo/vector-icons";

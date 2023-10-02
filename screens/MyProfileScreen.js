@@ -1,27 +1,23 @@
 import React, { useContext, useEffect, useState } from "react";
 
+import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
   Alert,
+  FlatList,
+  Image,
   ImageBackground,
   Platform,
-  StatusBar
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { MaterialIcons, Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
-import userContext from "../context/UserProvider";
 import postContext from "../context/PostsProvider";
-import { AntDesign } from "@expo/vector-icons";
+import userContext from "../context/UserProvider";
 import { db, firebase } from "../firebase";
-const MyProfileScreen = ({searchFilter }) => {
+const MyProfileScreen = () => {
   const deletePost = (postId) => {
     // Display an alert to confirm the deletion
     Alert.alert(
@@ -56,19 +52,24 @@ const MyProfileScreen = ({searchFilter }) => {
       { cancelable: true }
     );
   };
-  const user = firebase.auth().currentUser;
   const { posts } = useContext(postContext);
   const numColumns = 2;
   const [filteredPosts, setFilteredPosts] = useState([]);
   const navigation = useNavigation();
   const { userDetails } = useContext(userContext);
+
   useEffect(() => {
     // Filter the posts based on owner_uid
     const filtered = posts.filter(
-      (post) => post.owner_uid === userDetails.owner_uid
+      (post) => post.owner_email === userDetails.email
     );
     setFilteredPosts(filtered);
-  }, [posts, userDetails.uid]);
+  }, []);
+
+  const onPressBack = () => {
+    navigation.goBack();
+  };
+
   const renderItem = ({ item, index }) => {
     return (
       <TouchableOpacity
@@ -93,14 +94,6 @@ const MyProfileScreen = ({searchFilter }) => {
     );
   };
 
-  const onPressBack = () => {
-    navigation.goBack();
-  };
-
-  const onPressSave = () => {
-    console.log(`save button pressed`);
-  };
-
   return (
     <>
       {/* <View style={styles.container}> */}
@@ -115,30 +108,34 @@ const MyProfileScreen = ({searchFilter }) => {
           <MaterialIcons name="check" size={24} color="white" />
         </TouchableOpacity>
       </View> */}
-      
+
       {/* <StatusBar backgroundColor={'rgba(36, 39, 96, 0.05)'} /> */}
-      <ScrollView style={{
-        marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-      }}>
-      <View style={{ 
-        width: "100%",
-    }}>
+      <View
+        style={{
+          width: "100%",
+          marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+        }}
+      >
         <ImageBackground
-          source={require('../assets/natural-watercolor.jpg')}
+          source={require("../assets/natural-watercolor.jpg")}
           resizeMode="cover"
           style={{
-            height: 228,
+            height: 150,
             width: "100%",
           }}
         >
-          <TouchableOpacity style={styles.backButton} onPress={onPressBack}> 
+          <TouchableOpacity style={styles.backButton} onPress={onPressBack}>
             <MaterialIcons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
         </ImageBackground>
       </View>
       <View style={{ flex: 1, alignItems: "center" }}>
         <Image
-          source={{uri: userDetails?.image||'https://cimentlawfirm.com/wp-content/uploads/2021/03/dummy-profile.png'}}
+          source={{
+            uri:
+              userDetails?.image ||
+              "https://cimentlawfirm.com/wp-content/uploads/2021/03/dummy-profile.png",
+          }}
           resizeMode="contain"
           style={{
             height: 155,
@@ -152,8 +149,8 @@ const MyProfileScreen = ({searchFilter }) => {
 
         <Text
           style={{
-            fontWeight: 'bold', 
-            fontSize: 20, 
+            fontWeight: "bold",
+            fontSize: 20,
             lineHeight: 22,
             color: "#0080ff",
             marginVertical: 8,
@@ -162,14 +159,14 @@ const MyProfileScreen = ({searchFilter }) => {
           {userDetails.username}
         </Text>
         <Text
-            style={{
-              color: "#000",
-              fontSize: 14, 
-              lineHeight: 20 
-            }}
-          >
-            {userDetails.email}
-          </Text>
+          style={{
+            color: "#000",
+            fontSize: 14,
+            lineHeight: 20,
+          }}
+        >
+          {userDetails.email}
+        </Text>
         <View
           style={{
             flexDirection: "row",
@@ -180,7 +177,7 @@ const MyProfileScreen = ({searchFilter }) => {
           <MaterialIcons name="location-on" size={24} color="black" />
           <Text
             style={{
-              fontSize: 14, 
+              fontSize: 14,
               lineHeight: 20,
               marginLeft: 4,
             }}
@@ -197,65 +194,64 @@ const MyProfileScreen = ({searchFilter }) => {
         >
           <Text
             style={{
-              fontSize: 14, 
+              fontSize: 14,
               lineHeight: 20,
               marginLeft: 4,
             }}
           >
-           Bio: Nature Enthusiast
+            Bio: Nature Enthusiast
           </Text>
         </View>
-          <TouchableOpacity
-              style={{
-                width: "40%",
-                height: 36,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#0080ff",
-                borderRadius: 5,
-                marginHorizontal: 20,
-                flexDirection: "row",
-              }}
-              onPress={() => navigation.navigate('editProfile')}
-            >
-            <Text
-              style={{
-                fontSize: 18, 
-                lineHeight: 22,
-                color: "#FFF",
-                marginRight: 5
-              }}
-            >
-              Edit Profile
-            </Text>
-            <Feather name="edit" size={18} color="#FFF" />
-          </TouchableOpacity>
-          <View style={styles.observationContainer}>
-            <Text styles={{fontWeight: "bold"}}>MY OBSERVATONS</Text>
-          </View>
-          <View style={styles.postContainer}>
-            <FlatList
-              data={filteredPosts}
-              renderItem={renderItem}
-              numColumns={numColumns}
-              style={styles.flatlistItems}
-              keyExtractor={(item, index) => index.toString()}
-              contentContainerStyle={styles.postContainer}
-              columnWrapperStyle={{
-                justifyContent: "space-evenly",
-              }}
-            />
-          </View>
+        <TouchableOpacity
+          style={{
+            width: "40%",
+            height: 36,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#0080ff",
+            borderRadius: 5,
+            marginHorizontal: 20,
+            flexDirection: "row",
+          }}
+          onPress={() => navigation.navigate("editProfile")}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              lineHeight: 22,
+              color: "#FFF",
+              marginRight: 5,
+            }}
+          >
+            Edit Profile
+          </Text>
+          <Feather name="edit" size={18} color="#FFF" />
+        </TouchableOpacity>
+        <View style={styles.observationContainer}>
+          <Text styles={{ fontWeight: "bold" }}>MY OBSERVATONS</Text>
         </View>
-        </ScrollView>
+        <View style={styles.postContainer}>
+          <FlatList
+            data={filteredPosts}
+            renderItem={renderItem}
+            numColumns={numColumns}
+            style={styles.flatlistItems}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles.postContainer}
+            columnWrapperStyle={{
+              justifyContent: "space-evenly",
+            }}
+          />
+        </View>
+      </View>
 
-        {/* <View
+      {/* <View
           style={{
             paddingVertical: 8,
             flexDirection: "row",
           }}
         > */}
-        {/* <ImageBackground source={require('../assets/bluegreen.jpg')} style={styles.profileContainer}>
+      {/* <ImageBackground source={require('../assets/bluegreen.jpg')} style={styles.profileContainer}>
           <View style={styles.profileInfoContainer}>
             <Text style={styles.profileNameText}>{userDetails.username}</Text>
             <Text style={styles.profileEmailText}>{userDetails.email}</Text>
@@ -269,8 +265,8 @@ const MyProfileScreen = ({searchFilter }) => {
             />
           </View>
         </ImageBackground> */}
-        {/* // marker */}
-        {/* <View style={styles.infoContainer}>
+      {/* // marker */}
+      {/* <View style={styles.infoContainer}>
           <View style={styles.inputContainer}>
             <MaterialIcons
               name="person"
@@ -307,7 +303,6 @@ const MyProfileScreen = ({searchFilter }) => {
             />
           </View>
         </View> */}
-      
 
       {/* </View> */}
     </>
@@ -407,7 +402,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     borderBottomWidth: 2,
-    borderBottomColor: '#0080ff',
+    borderBottomColor: "#0080ff",
     marginTop: 20,
   },
   imgContainer: {

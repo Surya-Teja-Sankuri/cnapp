@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
 import { db } from "../firebase";
-import { onSnapshot } from "firebase/firestore";
 
 const postContext = createContext();
 
@@ -8,14 +7,23 @@ export const PostsProvider = ({ children }) => {
   const [posts, setPosts] = useState([]);
 
   const fetchPosts = () => {
+    console.log("inside post provider");
     try {
-      onSnapshot(db.collection("posts").orderBy("createdAt", "desc"), (d) => {
-        setPosts(
-          d.docs.map((post) => {
-            return { ...post.data(), id: post.id };
-          })
-        );
-      });
+      db.collection("posts").onSnapshot(
+        (snapshot) => {
+          setPosts(
+            snapshot.docs.map((post) => {
+              return {
+                ...post.data(),
+                id: post.id,
+              };
+            })
+          );
+        },
+        (error) => {
+          console.log("at post provider ", error);
+        }
+      );
     } catch (error) {
       console.log("Error fetching posts:", error);
     }

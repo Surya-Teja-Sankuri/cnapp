@@ -1,36 +1,42 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   View,
   StyleSheet,
   Text,
   SafeAreaView,
-  Pressable,
   TextInput,
-  Button,
   Alert,
   TouchableOpacity,
 } from "react-native";
-import Btn from "../assets/Btn";
-import Field from "../assets/Field";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import Validator from "email-validator";
-import { firebase } from "../firebase";
+import authService from "../firebase_services/auth";
+import userContext from "../context/UserProvider";
+import LoadingComponent from "../components/LoadingComponent";
 
 const Login = (props) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const LoginFormSchema = Yup.object().shape({
     email: Yup.string().email().required("An email is required"),
     password: Yup.string()
       .required()
       .min(6, "your password has to have atleast 8 characters"),
   });
-  const onLogin = async (email, password) => {
-    try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
-      console.log("firebase login success", email, password);
-    } catch (error) {
-      Alert.alert("invalid username or password", error.message);
-    }
+
+  const { setUserDetails } = useContext(userContext);
+
+  const onLogin = (email, password) => {
+    setIsLoading(true);
+    authService
+      .login({ email, password })
+      .then(async (user) => {
+        const userdata = await authService.getUserInfo(user.email);
+        setUserDetails(userdata);
+      })
+      .catch((error) => Alert.alert("Invalid email or Password"))
+      .finally(() => setIsLoading(false));
   };
 
   return (
@@ -139,13 +145,23 @@ const Login = (props) => {
                   value={values.password}
                 />
               </View>
-              <Pressable
+              <TouchableOpacity
                 titleSize={20}
-                style={styles.button(isValid)}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: !isLoading ? "#24ba9f" : "#AEB0AD",
+                  },
+                ]}
                 onPress={handleSubmit}
+                disabled={isLoading}
               >
-                <Text style={styles.buttontext}>LOG IN</Text>
-              </Pressable>
+                {isLoading ? (
+                  <LoadingComponent />
+                ) : (
+                  <Text style={styles.buttontext}>LOG IN</Text>
+                )}
+              </TouchableOpacity>
               <View style={styles.signupcont}>
                 <Text>Don't have an account?</Text>
                 <TouchableOpacity
@@ -189,8 +205,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 50,
   },
-  button: (isValid) => ({
-    backgroundColor: "#24ba9f",
+  button: {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 42,
@@ -198,7 +213,7 @@ const styles = StyleSheet.create({
     width: "80%",
     marginLeft: 25,
     marginTop: 15,
-  }),
+  },
   buttontext: {
     fontWeight: "600",
     color: "black",

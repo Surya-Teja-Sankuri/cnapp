@@ -40,18 +40,21 @@ const PostDetails = ({ navigation, route }) => {
     );
   };
 
-  const submitVerified = () => {
+  const submitVerified = async () => {
     const newVerified = {
-      verified: item.verified ? false : true,
+      verified: !item.verified,
     };
-    const updateToDoc = doc(db, "posts", item.id);
-    updateDoc(updateToDoc, newVerified)
-      .then(() => {
-        setVerifiedTick(!verifiedTick);
+    await db
+      .collection("posts")
+      .doc(item.id)
+      .update({
+        verified: newVerified,
       })
-      .catch((error) => {
-        console.log(error.message);
-      });
+      .then(() => {
+        setVerifiedTick(newVerified);
+        console.log("verified updated");
+      })
+      .catch((error) => console.log("error at verified field ", error));
   };
 
   return (
@@ -90,7 +93,7 @@ const PostDetails = ({ navigation, route }) => {
         >
           <TouchableOpacity
             style={styles.button}
-            disabled={!userDetails.Authorized}
+            disabled={!userDetails?.Authorized}
             onPress={handleAuthorizeButton}
           >
             <Feather
