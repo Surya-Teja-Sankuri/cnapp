@@ -22,7 +22,7 @@
     "expo": "~48.0.15",
     "expo-file-system": "^15.2.2",
     "expo-image-picker": "^14.1.1",
-    "expo-location": "^16.3.0",
+    "expo-location": "^15.1.1",
     "expo-status-bar": "~1.4.4",
     "filesystem": "^1.0.1",
     "firebase": "^9.22.1",

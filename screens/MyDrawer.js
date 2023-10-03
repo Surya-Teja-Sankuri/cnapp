@@ -29,27 +29,54 @@ import CustomDrawer from "../components/CustomDrawer";
 import { useNavigation } from "@react-navigation/native";
 
 const Drawer = createDrawerNavigator();
-
 function MyDrawer() {
   const navigation = useNavigation();
 
-  function Notifications() {
+  function Notifications({ navigation }) {
+    const openDrawer = () => {
+      navigation.openDrawer(); // Open the drawer
+    };
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={openDrawer}>
             <Feather name="arrow-left" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>About</Text>
         </View>
-        <Text>Notifications Screen</Text>
+        <View style={styles.container}>
+          <Text style={styles.title}>About cNature</Text>
+          <Image
+            source={require("../assets/treeii.jpg")}
+            style={styles.image}
+          />
+          <Text style={styles.description}>
+            cNature is a mobile application dedicated to exploring and
+            documenting the wonders of the natural world. With cNature, you can:
+          </Text>
+          <Text style={styles.listItem}>
+            - Record observations of plants, animals, insects, and more in your
+            local environment.
+          </Text>
+          <Text style={styles.listItem}>
+            - Collaborate with a community of nature enthusiasts and scientists.
+          </Text>
+          <Text style={styles.listItem}>
+            - Learn about different species and ecosystems through shared
+            observations.
+          </Text>
+          <Text style={styles.listItem}>
+            - Contribute to scientific research and conservation efforts.
+          </Text>
+          <Text style={styles.description}>
+            Join us in celebrating the beauty of nature and making a positive
+            impact on our planet!
+          </Text>
+          <Text style={styles.version}>Version 1.0</Text>
+        </View>
       </View>
     );
   }
-
   return (
     <Drawer.Navigator
       initialRouteName="Explore"
@@ -108,6 +135,37 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 10,
     padding: 10,
+  },
+  container: {
+    flex: 1,
+    marginTop: 0,
+    padding: 20,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  listItem: {
+    fontSize: 16,
+    textAlign: "left",
+    marginLeft: 20,
+    marginBottom: 5,
+  },
+  version: {
+    fontSize: 12,
+    marginTop: 20,
+  },
+  image: {
+    width: 160, // Adjust the width as needed
+    height: 160, // Adjust the height as needed
+    marginBottom: 10,
   },
 });
 export default MyDrawer;
